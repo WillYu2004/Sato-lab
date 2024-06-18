@@ -83,6 +83,64 @@ v_values = y_values[:, 0]
 h_values = y_values[:, 1]
 f_values = y_values[:, 2]
 
+
+# Function to detect APD and DI
+def detect_apd_di(t_values, v_values, threshold=0.1):
+    apd_list = []
+    di_list = []
+    pcl_list = []
+
+    apd_start = None
+    apd_end = None
+    last_apd_end = None
+
+    for i in range(1, len(v_values)):
+        if v_values[i - 1] < threshold <= v_values[i]:
+            apd_start = t_values[i]
+        elif v_values[i - 1] >= threshold > v_values[i]:
+            apd_end = t_values[i]
+            if apd_start is not None:
+                apd = apd_end - apd_start
+                apd_list.append(apd)
+                if last_apd_end is not None:
+                    di = apd_start - last_apd_end
+                    di_list.append(di)
+                    pcl = apd + di
+                    pcl_list.append(pcl)
+                last_apd_end = apd_end
+            apd_start = None
+            apd_end = None
+
+    return apd_list, di_list, pcl_list
+
+
+# Detect APD and DI
+apd_list, di_list, pcl_list = detect_apd_di(t_values, v_values)
+
+# Ensure lists have the same length
+min_length = min(len(apd_list), len(di_list), len(pcl_list))
+apd_list = apd_list[:min_length]
+di_list = di_list[:min_length]
+pcl_list = pcl_list[:min_length]
+
+# Plot APD vs PCL
+plt.figure()
+plt.plot(pcl_list, apd_list, 'o-')
+plt.title('APD vs PCL')
+plt.xlabel('PCL (ms)')
+plt.ylabel('APD (ms)')
+plt.grid(True)
+plt.show()
+
+# Plot APD_n+1 vs DI_n
+plt.figure()
+plt.plot(di_list[:-1], apd_list[1:], 'o-')
+plt.title('APD_{n+1} vs DI_n')
+plt.xlabel('DI_n (ms)')
+plt.ylabel('APD_{n+1} (ms)')
+plt.grid(True)
+plt.show()
+
 # Plot results
 plt.figure()
 plt.subplot(3, 1, 1)
